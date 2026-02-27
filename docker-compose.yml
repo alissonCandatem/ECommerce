@@ -1,0 +1,96 @@
+﻿version: '3.8'
+
+services:
+
+  # Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: ecommerce-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: ecommerce-kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+
+  # PostgreSQL - Usuarios
+  postgres-usuarios:
+    image: postgres:16
+    container_name: ecommerce-postgres-usuarios
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce_usuarios
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-usuarios-data:/var/lib/postgresql/data
+
+  # PostgreSQL - Produtos
+  postgres-produtos:
+    image: postgres:16
+    container_name: ecommerce-postgres-produtos
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce_produtos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-produtos-data:/var/lib/postgresql/data
+
+  # PostgreSQL - Pedidos
+  postgres-pedidos:
+    image: postgres:16
+    container_name: ecommerce-postgres-pedidos
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce_pedidos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-pedidos-data:/var/lib/postgresql/data
+
+  # pgAdmin - �nico para todos os bancos
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ecommerce-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ecommerce.com
+      PGADMIN_DEFAULT_PASSWORD: 123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5051:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres-usuarios
+      - postgres-produtos
+      - postgres-pedidos
+
+volumes:
+  postgres-usuarios-data:
+  postgres-produtos-data:
+  postgres-pedidos-data:
+  pgadmin-data:
