@@ -18,7 +18,7 @@ namespace ECommerce.Pedidos.Infrastructure
 
       services.AddScoped<IUnitOfWork, UnitOfWork>();
       services.AddScoped<IPedidoRepository, PedidoRepository>();
-      services.AddScoped<IEventPublisher, InMemoryEventPublisher>();
+      services.AddScoped<IEventPublisher, KafkaEventPublisher>();
       services.AddHostedService<OutboxProcessor>();
 
       return services;

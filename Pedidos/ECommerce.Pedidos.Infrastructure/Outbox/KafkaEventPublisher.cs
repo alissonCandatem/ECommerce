@@ -1,7 +1,10 @@
 ﻿using Confluent.Kafka;
+using ECommerce.Contracts.Contracts;
 using ECommerce.Mediator.Abstractions;
+using ECommerce.Pedidos.Domain.Events;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using System.Text.Json;
 
 namespace ECommerce.Pedidos.Infrastructure.Outbox
@@ -11,10 +14,7 @@ namespace ECommerce.Pedidos.Infrastructure.Outbox
     private readonly IProducer<string, string> _producer;
     private readonly ILogger<KafkaEventPublisher> _logger;
 
-    public KafkaEventPublisher(
-      IConfiguration configuration,
-      ILogger<KafkaEventPublisher> logger
-    )
+    public KafkaEventPublisher(IConfiguration configuration, ILogger<KafkaEventPublisher> logger)
     {
       _logger = logger;
 
@@ -30,8 +30,25 @@ namespace ECommerce.Pedidos.Infrastructure.Outbox
 
     public async Task PublishAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
-      var eventType = domainEvent.GetType().Name;
-      var payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType());
+      // mapeia o evento de domínio para o contrato compartilhado
+      var (topic, payload) = domainEvent switch
+      {
+        PedidoCriadoEvent e => ("pedidocriado",
+        JsonSerializer.Serialize(new PedidoCriadoContract
+        {
+          EventId = e.EventId,
+          OccurredAt = e.OccurredAt,
+          PedidoId = e.PedidoId,
+          UsuarioId = e.UsuarioId,
+          Itens = e.Itens.Select(i => new PedidoItemContract
+          {
+            ProdutoId = i.ProdutoId,
+            Quantidade = i.Quantidade
+          }).ToList()
+        })
+        ),
+        _ => (domainEvent.GetType().Name.ToLower().Replace("event", ""), JsonSerializer.Serialize(domainEvent, domainEvent.GetType()))
+      };
 
       var message = new Message<string, string>
       {
@@ -39,16 +56,14 @@ namespace ECommerce.Pedidos.Infrastructure.Outbox
         Value = payload,
         Headers = new Headers
         {
-          { "event-type", System.Text.Encoding.UTF8.GetBytes(eventType) },
-          { "occurred-at", System.Text.Encoding.UTF8.GetBytes(domainEvent.OccurredAt.ToString("O")) }
+          { "event-type", Encoding.UTF8.GetBytes(domainEvent.GetType().Name) },
+          { "occurred-at", Encoding.UTF8.GetBytes(domainEvent.OccurredAt.ToString("O")) }
         }
       };
 
-      var topic = eventType.ToLower().Replace("event", "");
-
       await _producer.ProduceAsync(topic, message, cancellationToken);
 
-      _logger.LogInformation("Evento {EventType} publicado no tópico {Topic}", eventType, topic);
+      _logger.LogInformation($"Evento {domainEvent.GetType().Name} publicado no tópico {topic}");
     }
   }
 }

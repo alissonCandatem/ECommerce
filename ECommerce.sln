@@ -42,6 +42,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommerce.Pedidos.Domain", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommerce.Pedidos.Infrastructure", "Pedidos\ECommerce.Pedidos.Infrastructure\ECommerce.Pedidos.Infrastructure.csproj", "{0BF2F672-6C2E-409A-885E-8E7B31B44529}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommerce.Contracts", "Shared\ECommerce.Contracts\ECommerce.Contracts.csproj", "{7549A53A-8131-42BC-BF01-D2C7EDC9E623}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -100,6 +102,10 @@ Global
 		{0BF2F672-6C2E-409A-885E-8E7B31B44529}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0BF2F672-6C2E-409A-885E-8E7B31B44529}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0BF2F672-6C2E-409A-885E-8E7B31B44529}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7549A53A-8131-42BC-BF01-D2C7EDC9E623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7549A53A-8131-42BC-BF01-D2C7EDC9E623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7549A53A-8131-42BC-BF01-D2C7EDC9E623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7549A53A-8131-42BC-BF01-D2C7EDC9E623}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,5 +124,6 @@ Global
 		{F39CA516-FBBC-4E7D-965A-A6AC13C0EFAA} = {454980BE-1039-4611-B9AD-F6643F4E036B}
 		{EE827907-F215-4D41-8F4A-36C49CD65423} = {454980BE-1039-4611-B9AD-F6643F4E036B}
 		{0BF2F672-6C2E-409A-885E-8E7B31B44529} = {454980BE-1039-4611-B9AD-F6643F4E036B}
+		{7549A53A-8131-42BC-BF01-D2C7EDC9E623} = {AFE163A3-A708-417C-9A11-3C94105B782A}
 	EndGlobalSection
 EndGlobal
