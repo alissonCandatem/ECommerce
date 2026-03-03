@@ -25,18 +25,17 @@ namespace ECommerce.IA.Api.Services
     {
       _logger.LogInformation($"Buscando schemas relevantes para: {pergunta}");
 
-      var embeddingPergunta = await _ollamaService.GerarEmbeddingAsync(pergunta, cancellationToken);
-
-      // monta o vetor como string diretamente no SQL
-      var embeddingStr = $"[{string.Join(",", embeddingPergunta.ToArray())}]";
+      var embedding = await _ollamaService.GerarEmbeddingAsync(pergunta, cancellationToken);
 
       var schemas = await _context.SchemaEmbeddings
-      .FromSqlRaw($"""
+      .FromSqlRaw("""
         SELECT id, tabela, banco, descricao, embedding, criado_em
         FROM schema_embeddings
-        ORDER BY embedding <-> '{embeddingStr}'::vector
-        LIMIT {limite}
-       """
+        ORDER BY embedding <-> {0}
+        LIMIT {1}
+       """,
+       embedding,
+       limite
       ).ToListAsync(cancellationToken);
 
       _logger.LogInformation($"Schemas encontrados: {string.Join(", ", schemas.Select(s => $"{s.Banco}.{s.Tabela}"))}");

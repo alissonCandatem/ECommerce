@@ -56,18 +56,20 @@ namespace ECommerce.IA.Api.Services
     private static string MontarPromptSql(string pergunta, string contexto)
     {
       return $"""
-        Você é um especialista em SQL e PostgreSQL.
-                
-        Aqui estão os schemas das tabelas relevantes:
-                
+        Você é um gerador de SQL puro para PostgreSQL. Sua única saída deve ser o comando SQL válido.
+
+        REGRAS ESTRITAS (obrigatórias):
+        - Responda APENAS com o SQL. Nada mais.
+        - Sem explicações, sem texto, sem "Aqui está", sem "Para", sem "SELECT ... -- comentário", sem markdown, sem código block (```sql), sem qualquer palavra fora do SQL.
+        - Sem introdução como "A query seria", "Para responder", "Execute isso".
+        - Se não for possível gerar SQL válido com as tabelas fornecidas, responda exatamente: -- Nenhuma query possível
+
+        Schemas relevantes (use SOMENTE nomes exatos dessas tabelas e colunas):
         {contexto}
-                
-        Pergunta: {pergunta}
-                
-        Gere APENAS o SQL necessário para responder a pergunta.
-        Não inclua explicações, comentários ou markdown.
-        Retorne somente o SQL puro.
-        Use apenas as tabelas e colunas presentes nos schemas acima.
+
+        Pergunta do usuário: {pergunta}
+
+        SQL:
        """;
     }
 
