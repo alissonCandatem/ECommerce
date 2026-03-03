@@ -8,14 +8,14 @@ namespace ECommerce.Usuarios.Domain.Entities.Usuario
     public string Nome { get; private set; } = null!;
     public string Email { get; private set; } = null!;
     public string SenhaHash { get; private set; } = null!;
-    public Role Role { get; private set; }
+    public ERole Role { get; private set; }
     public string? RefreshToken { get; private set; }
     public DateTime? RefreshTokenExpiry { get; private set; }
     public DateTime CriadoEm { get; private init; }
 
     private User(Guid id) : base(id) { }
 
-    public static User Criar(string nome, string email, string senhaHash, Role role = Role.User)
+    public static User Criar(string nome, string email, string senhaHash, ERole role = ERole.User)
     {
       var user = new User(Guid.NewGuid())
       {

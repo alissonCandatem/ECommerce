@@ -41,6 +41,7 @@ namespace ECommerce.Mediator.Pipeline
       {
         Console.WriteLine("ROLLBACK");
         await _unitOfWork.Rollback();
+
         return result;
       }
 

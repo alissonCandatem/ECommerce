@@ -87,6 +87,20 @@ services:
     volumes:
       - postgres-pedidos-data:/var/lib/postgresql/data
 
+  # Postgres - Banco de dados vetorial
+  postgres-ia:
+    image: pgvector/pgvector:pg16
+    container_name: ecommerce-postgres-ia
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce_ia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres-ia-data:/var/lib/postgresql/data
+ 
   # pgAdmin - único para todos os bancos
   pgadmin:
     image: dpage/pgadmin4
@@ -104,9 +118,19 @@ services:
       - postgres-usuarios
       - postgres-produtos
       - postgres-pedidos
+  
+  ollama:
+    image: ollama/ollama
+    container_name: ecommerce-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - E:/Ollama/models:/root/.ollama
 
 volumes:
   postgres-usuarios-data:
   postgres-produtos-data:
   postgres-pedidos-data:
+  postgres-ia-data:
   pgadmin-data:

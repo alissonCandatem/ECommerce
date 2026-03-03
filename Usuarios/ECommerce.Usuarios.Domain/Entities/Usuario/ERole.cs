@@ -1,6 +1,6 @@
 ﻿namespace ECommerce.Usuarios.Domain.Entities.Usuario
 {
-  public enum Role
+  public enum ERole
   {
     Admin = 1,
     User = 2
