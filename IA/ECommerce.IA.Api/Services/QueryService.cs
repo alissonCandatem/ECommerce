@@ -33,11 +33,10 @@ namespace ECommerce.IA.Api.Services
       var promptSql = MontarPromptSql(pergunta, contexto);
 
       var sqlBruto = await _ollamaService.GerarSqlAsync(promptSql, cancellationToken);
+      var banco = ExtrairBanco(sqlBruto, schemas);
       var sql = ExtrairSql(sqlBruto);
 
       _logger.LogInformation($"SQL gerado: {sql}");
-
-      var banco = DeterminarBanco(schemas);
 
       var dados = await ExecutarSqlAsync(sql, banco, cancellationToken);
 
@@ -56,20 +55,28 @@ namespace ECommerce.IA.Api.Services
     private static string MontarPromptSql(string pergunta, string contexto)
     {
       return $"""
-        Você é um gerador de SQL puro para PostgreSQL. Sua única saída deve ser o comando SQL válido.
+        Você é um gerador de SQL puro para PostgreSQL. Sua única saída deve ser exatamente neste formato:
+        
+        BANCO: IA
+        SQL: <comando SQL válido>
+        
+        REGRAS ESTRITAS:
+        - Responda APENAS no formato acima. Nada mais.
+        - Sem explicações, sem markdown, sem comentários
+        - Todas as tabelas ficam em schemas com sufixo _fdw. Exemplo: se o banco é "Usuarios" e a tabela é "users", use "usuarios_fdw.users"
+        - Para montar o schema use: <nome_do_banco_em_minusculo>_fdw.<nome_da_tabela>
+        - Quando a pergunta envolver dados de múltiplas tabelas ou bancos, use JOIN
+        - Identifique as relações entre tabelas pelos nomes das colunas (ex: usuario_id, pedido_id)
+        - Nunca selecione colunas sensíveis como senha_hash, refresh_token, refresh_token_expiry ou similares
+        - Use sintaxe PostgreSQL pura. Nunca use parâmetros como :param ou ?. Se precisar filtrar por um valor específico que não foi fornecido, omita o WHERE.
+        - NUNCA filtre por colunas sensíveis no WHERE
+        - Para excluir colunas sensíveis simplesmente não as inclua no SELECT
+        - Nunca adicione filtros WHERE que não foram explicitamente solicitados pelo usuário
 
-        REGRAS ESTRITAS (obrigatórias):
-        - Responda APENAS com o SQL. Nada mais.
-        - Sem explicações, sem texto, sem "Aqui está", sem "Para", sem "SELECT ... -- comentário", sem markdown, sem código block (```sql), sem qualquer palavra fora do SQL.
-        - Sem introdução como "A query seria", "Para responder", "Execute isso".
-        - Se não for possível gerar SQL válido com as tabelas fornecidas, responda exatamente: -- Nenhuma query possível
-
-        Schemas relevantes (use SOMENTE nomes exatos dessas tabelas e colunas):
+        Schemas disponíveis:
         {contexto}
-
+        
         Pergunta do usuário: {pergunta}
-
-        SQL:
        """;
     }
 
@@ -81,26 +88,30 @@ namespace ECommerce.IA.Api.Services
       });
 
       return $"""
-        Você é um assistente amigável de e-commerce.
-                
-        O usuário fez a seguinte pergunta: {pergunta}
-                
-        O SQL executado foi: {sql}
-                
-        Os dados retornados foram:
-        {dadosJson}
-                
-        Responda a pergunta do usuário de forma clara e amigável em português,
-        baseando-se nos dados retornados. Seja direto e objetivo.
+        Responda a pergunta abaixo em português de forma direta e objetiva em no máximo 3 frases.
+        Não mencione SQL, banco de dados ou detalhes técnicos.
+        Baseie sua resposta nos dados fornecidos.
+        
+        Pergunta: {pergunta}
+        Dados retornados: {dadosJson}
+        
+        Resposta direta:
        """;
     }
 
     private static string ExtrairSql(string sqlBruto)
     {
-      // remove markdown se o modelo retornou com ```sql
-      var sql = sqlBruto.Replace("```sql", "").Replace("```", "").Trim();
+      // remove linha do BANCO: se presente
+      var linhas = sqlBruto.Split('\n')
+          .Where(l => !l.StartsWith("BANCO:", StringComparison.OrdinalIgnoreCase))
+          .ToArray();
 
-      // pega só a primeira query se retornou várias
+      var sql = string.Join("\n", linhas)
+          .Replace("SQL:", "", StringComparison.OrdinalIgnoreCase)
+          .Replace("```sql", "")
+          .Replace("```", "")
+          .Trim();
+
       var semicolon = sql.IndexOf(';');
       if (semicolon > 0)
         sql = sql[..(semicolon + 1)];
@@ -110,7 +121,19 @@ namespace ECommerce.IA.Api.Services
 
     private string DeterminarBanco(List<string> schemas)
     {
-      // verifica qual banco tem mais schemas relevantes
+      var primeiroBanco = schemas
+          .FirstOrDefault(s => s.Contains("Banco:"))
+          ?.Split('\n')
+          .FirstOrDefault(l => l.StartsWith("Banco:"))?
+          .Replace("Banco:", "")
+          .Trim();
+
+      if (!string.IsNullOrEmpty(primeiroBanco))
+      {
+        _logger.LogInformation($"Banco determinado pelo schema mais relevante: {primeiroBanco}");
+        return primeiroBanco;
+      }
+
       var contagem = new Dictionary<string, int>
       {
         { "Usuarios", 0 },
@@ -130,9 +153,40 @@ namespace ECommerce.IA.Api.Services
       return contagem.MaxBy(x => x.Value).Key;
     }
 
+    private string ExtrairBanco(string sqlBruto, List<string> schemas)
+    {
+      var bancosValidos = _configuration
+          .GetSection("ConnectionStrings")
+          .GetChildren()
+          .Select(x => x.Key)
+          .Where(k => k != "IA")
+          .ToList();
+
+      var linhas = sqlBruto.Split('\n');
+
+      foreach (var linha in linhas)
+      {
+        if (linha.StartsWith("BANCO:", StringComparison.OrdinalIgnoreCase))
+        {
+          var banco = linha
+              .Replace("BANCO:", "", StringComparison.OrdinalIgnoreCase)
+              .Trim();
+
+          if (bancosValidos.Contains(banco, StringComparer.OrdinalIgnoreCase))
+          {
+            _logger.LogInformation($"Banco extraído da resposta do modelo: {banco}");
+            return banco;
+          }
+        }
+      }
+
+      _logger.LogWarning("Modelo não retornou banco no formato esperado, usando contagem");
+      return DeterminarBanco(schemas);
+    }
+
     private async Task<List<Dictionary<string, object?>>> ExecutarSqlAsync(string sql, string banco, CancellationToken cancellationToken)
     {
-      var connectionString = _configuration.GetConnectionString(banco);
+      var connectionString = _configuration.GetConnectionString("IA");
       var resultado = new List<Dictionary<string, object?>>();
 
       await using var connection = new NpgsqlConnection(connectionString);
@@ -145,15 +199,12 @@ namespace ECommerce.IA.Api.Services
       {
         var row = new Dictionary<string, object?>();
         for (var i = 0; i < reader.FieldCount; i++)
-        {
           row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-        }
 
         resultado.Add(row);
       }
 
       _logger.LogInformation($"Query retornou {resultado.Count} registros");
-
       return resultado;
     }
   }

@@ -127,6 +127,15 @@ services:
       - "11434:11434"
     volumes:
       - E:/Ollama/models:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   postgres-usuarios-data:

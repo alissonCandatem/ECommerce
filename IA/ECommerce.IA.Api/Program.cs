@@ -33,6 +33,7 @@ builder.Services.AddHttpClient<IOllamaService, OllamaService>(client =>
 builder.Services.AddScoped<ISchemaService, SchemaService>();
 builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IQueryService, QueryService>();
+builder.Services.AddHostedService<FdwSetupService>();
 
 var app = builder.Build();
 
