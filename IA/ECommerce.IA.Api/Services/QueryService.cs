@@ -29,8 +29,24 @@ namespace ECommerce.IA.Api.Services
       _logger = logger;
     }
 
+    private static readonly string[] OperacoesProibidas =
+    [
+      "delet", "remov", "exclu", "apag", "insert", "inserir",
+      "alter", "modific", "atualiz", "update", "drop", "truncat"
+    ];
+
     public async Task<ConsultaResponse> ConsultarAsync(string pergunta, CancellationToken cancellationToken = default)
     {
+      if (!PerguntaValida(pergunta))
+      {
+        return new ConsultaResponse
+        {
+          Pergunta = pergunta,
+          SqlGerado = string.Empty,
+          Resposta = "Essa operação não é permitida. Este endpoint é somente leitura."
+        };
+      }
+
       var sqlCacheado = await _queryCacheService.BuscarSqlCacheadoAsync(pergunta, cancellationToken);
 
       string sql;
@@ -64,6 +80,11 @@ namespace ECommerce.IA.Api.Services
         Resposta = resposta,
         Dados = dados
       };
+    }
+
+    private bool PerguntaValida(string pergunta)
+    {
+      return !OperacoesProibidas.Any(op => pergunta.Contains(op, StringComparison.CurrentCultureIgnoreCase));
     }
 
     private static void ValidarLeitura(string sql)
