@@ -34,6 +34,10 @@ builder.Services.AddScoped<ISchemaService, SchemaService>();
 builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
 builder.Services.AddScoped<IQueryService, QueryService>();
 builder.Services.AddHostedService<FdwSetupService>();
+builder.Services.AddScoped<IQueryCacheService, QueryCacheService>();
+builder.Services.AddScoped<ISqlExecutorService, SqlExecutorService>();
+builder.Services.AddScoped<ISqlGeneratorService, SqlGeneratorService>();
+builder.Services.AddScoped<IResponseFormatterService, ResponseFormatterService>();
 
 var app = builder.Build();
 

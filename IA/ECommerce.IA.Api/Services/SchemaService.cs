@@ -94,7 +94,7 @@ namespace ECommerce.IA.Api.Services
         FROM information_schema.tables 
         WHERE table_schema = 'public' 
         AND table_type = 'BASE TABLE'
-        AND table_name NOT IN ('outbox_messages', '__EFMigrationsHistory')
+        AND LOWER(table_name) NOT IN ('outbox_messages', '__efmigrationshistory')
         ORDER BY table_name
        """;
 
