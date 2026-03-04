@@ -36,6 +36,7 @@ namespace ECommerce.IA.Api.Services
       return $"""
         Responda a pergunta abaixo em português de forma direta e objetiva em no máximo 3 frases.
         Não mencione SQL, banco de dados ou detalhes técnicos.
+        Se a pergunta envolver deletar, alterar, excluir, inserir ou qualquer operação de escrita, responda apenas: "Essa operação não é permitida neste endpoint."
         Baseie sua resposta nos dados fornecidos.
         
         Pergunta: {pergunta}

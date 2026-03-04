@@ -79,6 +79,7 @@ namespace ECommerce.IA.Api.Services
         {contexto}
         
         Regras:
+        - Gere APENAS comandos SELECT. Nunca gere INSERT, UPDATE, DELETE, DROP, TRUNCATE ou ALTER.
         - Use apenas os schemas e tabelas fornecidos.
         - Todas as tabelas estão em schemas com sufixo _fdw no formato <banco>_fdw.<tabela>.
         - Nunca use o mesmo alias para tabelas diferentes
@@ -121,6 +122,7 @@ namespace ECommerce.IA.Api.Services
        ANÁLISE O ERRO E CORRIJA.
 
         Regras:
+        - Gere APENAS comandos SELECT. Nunca gere INSERT, UPDATE, DELETE, DROP, TRUNCATE ou ALTER.
         - Use apenas os schemas e tabelas fornecidos.
         - Todas as tabelas estão em schemas com sufixo _fdw no formato <banco>_fdw.<tabela>.
         - Nunca use o mesmo alias para tabelas diferentes
