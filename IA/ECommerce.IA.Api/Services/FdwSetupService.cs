@@ -14,16 +14,10 @@ namespace ECommerce.IA.Api.Services
       { "pedidos_server", "postgres-pedidos" }
     };
 
-    private readonly Dictionary<string, (string Server, string Schema, string[] Tables)> _tabelas = new()
-    {
-      { "usuarios_fdw", ("usuarios_server", "public", new[] { "users" }) },
-      { "produtos_fdw", ("produtos_server", "public", new[] { "produtos" }) },
-      { "pedidos_fdw", ("pedidos_server", "public", new[] { "pedidos", "pedido_itens" }) }
-    };
-
     public FdwSetupService(
-        IConfiguration configuration,
-        ILogger<FdwSetupService> logger)
+      IConfiguration configuration,
+      ILogger<FdwSetupService> logger
+    )
     {
       _configuration = configuration;
       _logger = logger;
@@ -40,7 +34,6 @@ namespace ECommerce.IA.Api.Services
       await CriarExtensaoAsync(connection, cancellationToken);
       await CriarServidoresAsync(connection, cancellationToken);
       await CriarMapeamentosAsync(connection, cancellationToken);
-      await CriarSchemasAsync(connection, cancellationToken);
       await ImportarTabelasAsync(connection, cancellationToken);
 
       _logger.LogInformation("Foreign Data Wrappers configurados com sucesso");
@@ -96,29 +89,24 @@ namespace ECommerce.IA.Api.Services
       }
     }
 
-    private async Task CriarSchemasAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
-    {
-      foreach (var (schema, _) in _tabelas)
-      {
-        await ExecutarAsync(connection, $"DROP SCHEMA IF EXISTS {schema} CASCADE;", cancellationToken);
-        await ExecutarAsync(connection, $"CREATE SCHEMA {schema};", cancellationToken);
-      }
-    }
-
     private async Task ImportarTabelasAsync(NpgsqlConnection connection, CancellationToken cancellationToken)
     {
-      foreach (var (schema, (server, remoteSchema, tables)) in _tabelas)
+      foreach (var (nomeServidor, _) in _servidores)
       {
-        var tableList = string.Join(", ", tables);
+        var schema = nomeServidor.Replace("_server", "_fdw");
 
         await ExecutarAsync(connection, $"""
-          IMPORT FOREIGN SCHEMA {remoteSchema}
-              LIMIT TO ({tableList})
-              FROM SERVER {server}
+          DROP SCHEMA IF EXISTS {schema} CASCADE;
+          CREATE SCHEMA {schema};
+          IMPORT FOREIGN SCHEMA public
+              EXCEPT (outbox_messages, "__EFMigrationsHistory")
+              FROM SERVER {nomeServidor}
               INTO {schema};
-         """, cancellationToken);
+         """,
+         cancellationToken
+        );
 
-        _logger.LogInformation($"Tabelas [{tableList}] importadas do servidor {server} para o schema {schema}");
+        _logger.LogInformation($"Schema {schema} importado do servidor {nomeServidor}");
       }
     }
 

@@ -10,7 +10,7 @@ namespace ECommerce.IA.Api.Services
     private readonly IADbContext _context;
     private readonly IOllamaService _ollamaService;
     private readonly ILogger<QueryCacheService> _logger;
-    private const float SimilaridadeMinima = 0.85f;
+    private const float SimilaridadeMinima = 0.85f; // A similaridade vai impactar no SQL gerado, se uma frase for 85% "similar" a uma que ja foi cacheada, vai gerar o SQL(Obs: Isso não é a melhor forma pois podem gerar confusão dependendo do Modelo)
 
     public QueryCacheService(
       IADbContext context,

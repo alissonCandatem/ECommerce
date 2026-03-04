@@ -8,19 +8,16 @@ namespace ECommerce.IA.Api.Services
     private readonly ISqlExecutorService _sqlExecutor;
     private readonly ILogger<SqlGeneratorService> _logger;
     private const int MaxTentativas = 3;
-    private readonly IConfiguration _configuration;
 
     public SqlGeneratorService(
       IOllamaService ollamaService,
       ISqlExecutorService sqlExecutor,
-      ILogger<SqlGeneratorService> logger,
-      IConfiguration configuration
+      ILogger<SqlGeneratorService> logger
     )
     {
       _ollamaService = ollamaService;
       _sqlExecutor = sqlExecutor;
       _logger = logger;
-      _configuration = configuration;
     }
 
     public async Task<(string Sql, List<Dictionary<string, object?>> Dados)> GerarAsync(string pergunta, string contexto, CancellationToken cancellationToken = default)
@@ -66,7 +63,7 @@ namespace ECommerce.IA.Api.Services
 
     private string MontarPrompt(string pergunta, string contexto)
     {
-      var schemasDisponiveis = ObterSchemasDisponiveis();
+      var schemasDisponiveis = ExtrairSchemasDoContexto(contexto);
 
       return $"""
         Garanta que o SQL responda EXATAMENTE à intenção semântica da pergunta.
@@ -82,19 +79,16 @@ namespace ECommerce.IA.Api.Services
         {contexto}
         
         Regras:
-        - Use JOIN para cruzar tabelas, identificando relações pelos nomes das colunas
-        - Todas as tabelas ficam em schemas com sufixo _fdw. Exemplo: se o banco é "Usuarios" e a tabela é "users", use "usuarios_fdw.users"
-        - Para montar o schema use: <nome_do_banco_em_minusculo>_fdw.<nome_da_tabela>
-        - Quando a pergunta envolver dados de múltiplas tabelas ou bancos, use JOIN
-        - Identifique as relações entre tabelas pelos nomes das colunas (ex: usuario_id, pedido_id)
-        - Nunca selecione colunas sensíveis como senha_hash, refresh_token, refresh_token_expiry ou similares
-        - Use sintaxe PostgreSQL
-        - Use WHERE quando a pergunta envolver filtro temporal, numérico ou condicional
-        - Sem comentários, sem parâmetros, sem markdown
-        - Termine com ponto e vírgula
-        - O SQL deve refletir exatamente a intenção da pergunta.
-        - Se a pergunta envolver ranking (segundo, terceiro, top N), o SQL deve implementar corretamente essa posição.
-        - Se envolver dependência entre agregações, use subqueries ou CTEs.
+        - Use apenas os schemas e tabelas fornecidos.
+        - Todas as tabelas estão em schemas com sufixo _fdw no formato <banco>_fdw.<tabela>.
+        - Nunca use o mesmo alias para tabelas diferentes
+        - Descubra relações entre tabelas pelos nomes das colunas.
+        - Use sintaxe PostgreSQL válida.
+        - Não invente colunas ou tabelas.
+        - Se a pergunta exigir múltiplas etapas lógicas, resolva usando CTEs sequenciais.
+        - Para ranking use ORDER BY com LIMIT, nunca use RANK() OVER ou RANK() WITHIN GROUP
+        - Não explique nada.
+        - Retorne apenas no formato especificado.
 
         Pergunta: {pergunta}
        """;
@@ -102,7 +96,7 @@ namespace ECommerce.IA.Api.Services
 
     private string MontarPromptComErro(string pergunta, string contexto, string sqlAnterior, string erro)
     {
-      var schemasDisponiveis = ObterSchemasDisponiveis();
+      var schemasDisponiveis = ExtrairSchemasDoContexto(contexto);
 
       return $"""
         Você é um gerador de SQL puro para PostgreSQL. Sua única saída deve ser exatamente neste formato:
@@ -127,34 +121,40 @@ namespace ECommerce.IA.Api.Services
        ANÁLISE O ERRO E CORRIJA.
 
         Regras:
-        - Use JOIN para cruzar tabelas, identificando relações pelos nomes das colunas
-        - Todas as tabelas ficam em schemas com sufixo _fdw. Exemplo: se o banco é "Usuarios" e a tabela é "users", use "usuarios_fdw.users"
-        - Para montar o schema use: <nome_do_banco_em_minusculo>_fdw.<nome_da_tabela>
-        - Quando a pergunta envolver dados de múltiplas tabelas ou bancos, use JOIN
-        - Identifique as relações entre tabelas pelos nomes das colunas (ex: usuario_id, pedido_id)
-        - Nunca selecione colunas sensíveis como senha_hash, refresh_token, refresh_token_expiry ou similares
-        - Use sintaxe PostgreSQL
-        - Use WHERE quando a pergunta envolver filtro temporal, numérico ou condicional
-        - Sem comentários, sem parâmetros, sem markdown
-        - Termine com ponto e vírgula
-        - O SQL deve refletir exatamente a intenção da pergunta.
-        - Se a pergunta envolver ranking (segundo, terceiro, top N), o SQL deve implementar corretamente essa posição.
-        - Se envolver dependência entre agregações, use subqueries ou CTEs.
+        - Use apenas os schemas e tabelas fornecidos.
+        - Todas as tabelas estão em schemas com sufixo _fdw no formato <banco>_fdw.<tabela>.
+        - Nunca use o mesmo alias para tabelas diferentes
+        - Descubra relações entre tabelas pelos nomes das colunas.
+        - Use sintaxe PostgreSQL válida.
+        - Não invente colunas ou tabelas.
+        - Se a pergunta exigir múltiplas etapas lógicas, resolva usando CTEs sequenciais.
+        - Para ranking use ORDER BY com LIMIT, nunca use RANK() OVER ou RANK() WITHIN GROUP
+        - Não explique nada.
+        - Retorne apenas no formato especificado.
                            
         Pergunta do usuário: {pergunta}
        """;
     }
 
-    private string ObterSchemasDisponiveis()
+    private string ExtrairSchemasDoContexto(string contexto)
     {
-      var bancos = _configuration
-          .GetSection("ConnectionStrings")
-          .GetChildren()
-          .Select(x => x.Key)
-          .Where(k => k != "IA")
-          .ToList();
+      var schemas = new List<string>();
+      string? bancoAtual = null;
+      string? tabelaAtual = null;
 
-      return string.Join("\n", bancos.Select(b => $"- {b.ToLower()}_fdw.*"));
+      foreach (var linha in contexto.Split('\n'))
+      {
+        if (linha.StartsWith("Banco:"))
+          bancoAtual = linha.Replace("Banco:", "").Trim().ToLower();
+        else if (linha.StartsWith("Tabela:"))
+        {
+          tabelaAtual = linha.Replace("Tabela:", "").Trim();
+          if (bancoAtual != null && tabelaAtual != null)
+            schemas.Add($"- {bancoAtual}_fdw.{tabelaAtual}");
+        }
+      }
+
+      return string.Join("\n", schemas.Distinct());
     }
 
     private static string ExtrairSql(string sqlBruto)

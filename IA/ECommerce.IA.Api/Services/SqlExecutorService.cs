@@ -9,8 +9,8 @@ namespace ECommerce.IA.Api.Services
     private readonly ILogger<SqlExecutorService> _logger;
 
     public SqlExecutorService(
-        IConfiguration configuration,
-        ILogger<SqlExecutorService> logger
+      IConfiguration configuration,
+      ILogger<SqlExecutorService> logger
     )
     {
       _configuration = configuration;

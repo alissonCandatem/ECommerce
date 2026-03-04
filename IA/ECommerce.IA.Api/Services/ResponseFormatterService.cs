@@ -28,21 +28,6 @@ namespace ECommerce.IA.Api.Services
 
     private static string MontarPrompt(string pergunta, string sql, List<Dictionary<string, object?>> dados)
     {
-      var sqlUpper = sql.ToUpper().Trim();
-      var leitura = sqlUpper.StartsWith("INSERT") ||
-                      sqlUpper.StartsWith("UPDATE") ||
-                      sqlUpper.StartsWith("DELETE");
-
-      if (leitura)
-      {
-        return $"""
-          Responda em português de forma direta em 1 frase confirmando que a operação foi realizada.
-          Não mencione SQL ou detalhes técnicos.
-                    
-          Operação solicitada: {pergunta}
-         """;
-      }
-
       var dadosJson = JsonSerializer.Serialize(dados, new JsonSerializerOptions
       {
         WriteIndented = true
@@ -52,10 +37,10 @@ namespace ECommerce.IA.Api.Services
         Responda a pergunta abaixo em português de forma direta e objetiva em no máximo 3 frases.
         Não mencione SQL, banco de dados ou detalhes técnicos.
         Baseie sua resposta nos dados fornecidos.
-                
+        
         Pergunta: {pergunta}
         Dados retornados: {dadosJson}
-                
+        
         Resposta direta:
        """;
     }

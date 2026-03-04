@@ -50,10 +50,11 @@ namespace ECommerce.IA.Api.Services
 
         (sql, dados) = await _sqlGenerator.GerarAsync(pergunta, contexto, cancellationToken);
 
+        ValidarLeitura(sql);
+
         await _queryCacheService.SalvarAsync(pergunta, sql, cancellationToken);
       }
 
-      // 6. formata resposta
       var resposta = await _responseFormatter.FormatarAsync(pergunta, sql, dados, cancellationToken);
 
       return new ConsultaResponse
@@ -63,6 +64,14 @@ namespace ECommerce.IA.Api.Services
         Resposta = resposta,
         Dados = dados
       };
+    }
+
+    private static void ValidarLeitura(string sql)
+    {
+      var sqlUpper = sql.ToUpper().Trim();
+
+      if (sqlUpper.StartsWith("INSERT") || sqlUpper.StartsWith("UPDATE") || sqlUpper.StartsWith("DELETE") || sqlUpper.StartsWith("DROP") || sqlUpper.StartsWith("TRUNCATE") || sqlUpper.StartsWith("ALTER"))
+        throw new InvalidOperationException("Operações de escrita não são permitidas neste endpoint.");
     }
   }
 }
