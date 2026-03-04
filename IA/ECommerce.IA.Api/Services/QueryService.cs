@@ -32,7 +32,7 @@ namespace ECommerce.IA.Api.Services
     private static readonly string[] OperacoesProibidas =
     [
       "delet", "remov", "exclu", "apag", "insert", "inserir",
-      "alter", "modific", "atualiz", "update", "drop", "truncat"
+      "alter", "modific", " -", "update", "drop", "truncat"
     ];
 
     public async Task<ConsultaResponse> ConsultarAsync(string pergunta, CancellationToken cancellationToken = default)

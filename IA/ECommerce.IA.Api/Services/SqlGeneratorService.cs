@@ -88,6 +88,7 @@ namespace ECommerce.IA.Api.Services
         - Não invente colunas ou tabelas.
         - Se a pergunta exigir múltiplas etapas lógicas, resolva usando CTEs sequenciais.
         - Para ranking use ORDER BY com LIMIT, nunca use RANK() OVER ou RANK() WITHIN GROUP
+        - Nunca reutilize o mesmo alias para CTEs diferentes
         - Não explique nada.
         - Retorne apenas no formato especificado.
 
@@ -131,6 +132,7 @@ namespace ECommerce.IA.Api.Services
         - Não invente colunas ou tabelas.
         - Se a pergunta exigir múltiplas etapas lógicas, resolva usando CTEs sequenciais.
         - Para ranking use ORDER BY com LIMIT, nunca use RANK() OVER ou RANK() WITHIN GROUP
+        - Nunca reutilize o mesmo alias para CTEs diferentes
         - Não explique nada.
         - Retorne apenas no formato especificado.
                            

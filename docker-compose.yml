@@ -119,17 +119,25 @@ services:
       - postgres-produtos
       - postgres-pedidos
   
+  # ollama - gerenciador de modelos IA
   ollama:
     image: ollama/ollama
     container_name: ecommerce-ollama
     restart: unless-stopped
     ports:
-      - "11434:11434"
+    - "11434:11434"
     volumes:
-      - E:/Ollama/models:/root/.ollama
+    - E:/Ollama/models:/root/.ollama
     environment:
-      - OLLAMA_KEEP_ALIVE=-1
-    gpus: all
+    - OLLAMA_KEEP_ALIVE=-1
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama run qwen2.5-coder:7b 'hello' && wait"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+           - driver: nvidia
+             count: 1
+             capabilities: [gpu]
 
 volumes:
   postgres-usuarios-data:
