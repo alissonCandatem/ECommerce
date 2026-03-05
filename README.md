@@ -6,7 +6,7 @@ Projeto de e-commerce construído com microsserviços em .NET 8, utilizando Clea
 
 ## Frontend
 
-A interface web deste projeto está disponível em [alissonCandatem/ECommerce-Web](https://github.com/alissonCandatem/ECommerce-Web), construída com Next.js 16, TypeScript e shadcn/ui.
+A interface web deste projeto está disponível em [alissonCandatem/ECommerce-Web](https://github.com/alissonCandatem/ECommerce-Web).
 
 ---
 
