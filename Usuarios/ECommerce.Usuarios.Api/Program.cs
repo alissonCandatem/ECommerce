@@ -31,6 +31,7 @@ if (app.Environment.IsDevelopment())
 
 // removido para testes internos
 //app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

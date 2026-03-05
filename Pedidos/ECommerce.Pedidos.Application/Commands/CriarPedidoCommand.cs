@@ -1,10 +1,12 @@
 ﻿using ECommerce.Mediator.Abstractions;
 using ECommerce.Mediator.Shared;
+using System.Text.Json.Serialization;
 
 namespace ECommerce.Pedidos.Application.Commands
 {
   public sealed record CriarPedidoCommand : ICommand<ResultNotification>
   {
+    [JsonIgnore]
     public Guid UsuarioId { get; init; }
     public List<CriarPedidoItemCommand> Itens { get; init; } = [];
   }
