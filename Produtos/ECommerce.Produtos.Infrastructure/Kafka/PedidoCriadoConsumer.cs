@@ -62,7 +62,6 @@ namespace ECommerce.Produtos.Infrastructure.Kafka
         catch (Exception ex)
         {
           _logger.LogError(ex, $"Erro ao consumir mensagem do tópico {Topic}");
-          await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
       }
 
