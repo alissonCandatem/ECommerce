@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace ECommerce.Usuarios.Application.Events.Handlers.Usuario
 {
-  public sealed class UserCreatedEventHandler : IDomainEventHandler<UsuarioCriadoEvent>
+  public sealed class UsuarioCriadoEventHandler : IDomainEventHandler<UsuarioCriadoEvent>
   {
-    private readonly ILogger<UserCreatedEventHandler> _logger;
+    private readonly ILogger<UsuarioCriadoEventHandler> _logger;
 
-    public UserCreatedEventHandler(ILogger<UserCreatedEventHandler> logger)
+    public UsuarioCriadoEventHandler(ILogger<UsuarioCriadoEventHandler> logger)
     {
       _logger = logger;
     }

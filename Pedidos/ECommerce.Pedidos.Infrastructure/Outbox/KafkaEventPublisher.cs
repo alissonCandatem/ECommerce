@@ -30,7 +30,6 @@ namespace ECommerce.Pedidos.Infrastructure.Outbox
 
     public async Task PublishAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
-      // mapeia o evento de domínio para o contrato compartilhado
       var (topic, payload) = domainEvent switch
       {
         PedidoCriadoEvent e => ("pedidocriado",

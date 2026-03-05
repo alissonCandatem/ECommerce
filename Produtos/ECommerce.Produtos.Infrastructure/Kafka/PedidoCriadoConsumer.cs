@@ -18,9 +18,10 @@ namespace ECommerce.Produtos.Infrastructure.Kafka
     private const string Topic = "pedidocriado";
 
     public PedidoCriadoConsumer(
-        IServiceProvider provider,
-        IConfiguration configuration,
-        ILogger<PedidoCriadoConsumer> logger)
+      IServiceProvider provider,
+      IConfiguration configuration,
+      ILogger<PedidoCriadoConsumer> logger
+    )
     {
       _provider = provider;
       _logger = logger;
@@ -52,7 +53,7 @@ namespace ECommerce.Produtos.Infrastructure.Kafka
 
           await ProcessAsync(result.Message.Value, stoppingToken);
 
-          _consumer.Commit(result); // commit manual após processar
+          _consumer.Commit(result);
         }
         catch (OperationCanceledException)
         {
