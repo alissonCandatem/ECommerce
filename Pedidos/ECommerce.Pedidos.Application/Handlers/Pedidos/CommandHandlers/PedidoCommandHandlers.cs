@@ -32,11 +32,12 @@ namespace ECommerce.Pedidos.Application.Handlers.Pedidos.CommandHandlers
       }
 
       var itens = command.Itens.Select(i => PedidoItem.Criar(
-          Guid.Empty,
-          i.ProdutoId,
-          i.NomeProduto,
-          i.PrecoUnitario,
-          i.Quantidade)).ToList();
+        Guid.Empty,
+        i.ProdutoId,
+        i.NomeProduto,
+        i.PrecoUnitario,
+        i.Quantidade))
+      .ToList();
 
       var pedido = Pedido.Criar(command.UsuarioId, itens);
 
