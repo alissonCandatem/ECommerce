@@ -4,6 +4,10 @@ Projeto de e-commerce construído com microsserviços em .NET 8, utilizando Clea
 
 > **Nota:** Este projeto foi construído sobre o [dotnet-scaffold](https://github.com/seu-usuario/dotnet-scaffold), um template base com Mediator próprio, Result Pattern, Notification Pattern e Outbox Pattern já configurados.
 
+## Frontend
+
+A interface web deste projeto está disponível em [alissonCandatem/ECommerce-Web](https://github.com/alissonCandatem/ECommerce-Web), construída com Next.js 16, TypeScript e shadcn/ui.
+
 ---
 
 ## Arquitetura
@@ -11,7 +15,7 @@ Projeto de e-commerce construído com microsserviços em .NET 8, utilizando Clea
 ```
                         ┌─────────────────┐
                         │   API Gateway   │
-                        │  YARP :5000     │
+                        │  YARP :5100     │
                         └────────┬────────┘
                                  │
           ┌──────────────────────┼──────────────────────┬──────────────────┐
@@ -27,7 +31,7 @@ Projeto de e-commerce construído com microsserviços em .NET 8, utilizando Clea
                                            │                     │     Ollama     │
                                     ┌──────▼──────┐              │     :11434     │
                                     │    Kafka    │              │                │
-                                    │   :9092     │              │ deepseek-coder │
+                                    │   :9092     │              │ qwen2.5-coder  │
                                     └─────────────┘              │ nomic-embed    │
                                                                  └────────────────┘
 ```
@@ -72,11 +76,11 @@ Busca schemas relevantes no pgvector por similaridade semântica
       ↓
 Monta prompt com contexto dos schemas encontrados
       ↓
-DeepSeek Coder gera o SQL
+qwen2.5-coder gera o SQL
       ↓
 Executa no banco via PostgreSQL FDW (suporta JOINs entre bancos)
       ↓
-DeepSeek formata a resposta em linguagem natural
+qwen2.5-coder formata a resposta em linguagem natural
 ```
 
 **Exemplos de consultas:**
@@ -120,7 +124,7 @@ Estoque atualizado automaticamente
 - **JWT** — autenticação
 - **Docker** — infraestrutura local
 - **Ollama** — servidor de LLMs local
-- **DeepSeek Coder 6.7B** — geração de SQL e respostas
+- **qwen2.5-coder** — geração de SQL e respostas
 - **nomic-embed-text** — geração de embeddings para RAG
 
 ---
@@ -174,7 +178,7 @@ Aguarde cerca de 30 segundos para todos os containers estarem prontos.
 docker exec -it ecommerce-ollama ollama pull nomic-embed-text
 
 # modelo para geração de SQL e respostas
-docker exec -it ecommerce-ollama ollama pull deepseek-coder:6.7b
+docker exec -it ecommerce-ollama ollama pull qwen2.5-coder
 ```
 
 ### 5. Crie os bancos de dados
@@ -399,7 +403,5 @@ ECommerce
 ---
 
 ## Pendências
-
-- [ ] Sistema de metadados para colunas sensíveis e relações entre tabelas
-- [ ] Otimização de performance das consultas de IA
 - [ ] Testes unitários
+- [ ] Feedback de falha de estoque via evento Kafka (PedidoFalhouEvent)
